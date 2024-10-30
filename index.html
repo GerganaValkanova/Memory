@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Game</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #timer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 1.5em;
+        }
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 100px);
+            grid-template-rows: repeat(4, 100px);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: #ccc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+        .card img {
+            max-width: 80%;
+            max-height: 80%;
+        }
+        .flipped {
+            background-color: white;
+        }
+        .matched {
+            border-color: green;
+            cursor: default;
+        }
+        #message {
+            position: absolute;
+            top: 20px;
+            font-size: 1.8em;
+            font-weight: bold;
+            text-align: center;
+            width: 100%;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="timer">Време: 1:00</div>
+    <div id="message"></div>
+    <div class="container">
+        <div id="game-board"></div>
+    </div>
+
+    <script>
+        const cards = [
+            { id: 1, type: "dog", content: "🐶" },
+            { id: 2, type: "dog", content: "dog" },
+            { id: 3, type: "cat", content: "🐱" },
+            { id: 4, type: "cat", content: "cat" },
+            { id: 5, type: "apple", content: "🍎" },
+            { id: 6, type: "apple", content: "apple" },
+            { id: 7, type: "car", content: "🚗" },
+            { id: 8, type: "car", content: "car" },
+            { id: 9, type: "book", content: "📚" },
+            { id: 10, type: "book", content: "book" },
+            { id: 11, type: "sun", content: "☀️" },
+            { id: 12, type: "sun", content: "sun" },
+            { id: 13, type: "fish", content: "🐟" },
+            { id: 14, type: "fish", content: "fish" },
+            { id: 15, type: "tree", content: "🌳" },
+            { id: 16, type: "tree", content: "tree" }
+        ];
+
+        let timer;
+        let timeLeft = 60; // Таймерът е настроен на 1 минута (60 секунди)
+        let flippedCards = [];
+        let matchedCards = [];
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function startTimer() {
+            const timerElement = document.getElementById("timer");
+            timer = setInterval(() => {
+                if (timeLeft <= 0) {
+                    endGame(false);
+                    return;
+                }
+                timeLeft--;
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `Време: ${minutes}:${seconds < 10 ? "0" + seconds : seconds}`;
+            }, 1000);
+        }
+
+        function createBoard() {
+            const gameBoard = document.getElementById("game-board");
+            const shuffledCards = shuffle([...cards]);
+            shuffledCards.forEach(card => {
+                const cardElement = document.createElement("div");
+                cardElement.classList.add("card");
+                cardElement.dataset.type = card.type;
+                cardElement.dataset.id = card.id;
+                cardElement.addEventListener("click", () => flipCard(cardElement, card.content));
+                gameBoard.appendChild(cardElement);
+            });
+        }
+
+        function flipCard(cardElement, content) {
+            if (flippedCards.length < 2 && !cardElement.classList.contains("flipped") && !cardElement.classList.contains("matched")) {
+                cardElement.classList.add("flipped");
+                cardElement.innerHTML = typeof content === "string" && content.length > 2 ? content : `<span style="font-size: 2em;">${content}</span>`;
+                flippedCards.push(cardElement);
+
+                if (flippedCards.length === 2) {
+                    checkForMatch();
+                }
+            }
+        }
+
+        function checkForMatch() {
+            const [card1, card2] = flippedCards;
+            if (card1.dataset.type === card2.dataset.type) {
+                card1.classList.add("matched");
+                card2.classList.add("matched");
+                matchedCards.push(card1, card2);
+                flippedCards = [];
+                if (matchedCards.length === cards.length) {
+                    endGame(true);
+                }
+            } else {
+                setTimeout(() => {
+                    card1.classList.remove("flipped");
+                    card2.classList.remove("flipped");
+                    card1.innerHTML = "";
+                    card2.innerHTML = "";
+                    flippedCards = [];
+                }, 500); // Затваря картите след 0.5 секунди, ако не са двойка
+            }
+        }
+
+        function endGame(isWin) {
+            clearInterval(timer);
+            const messageElement = document.getElementById("message");
+            messageElement.style.display = "block";
+            messageElement.textContent = isWin ? "Имаш отлична памет!" : "За по-добра памет изяж шепа орехи и играй отново!";
+        }
+
+        function startGame() {
+            createBoard();
+            startTimer();
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
